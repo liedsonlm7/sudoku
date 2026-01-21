@@ -2,6 +2,7 @@ package br.com.dio;
 
 import br.com.dio.model.Board;
 import br.com.dio.model.Space;
+import br.com.dio.util.BoardTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,8 +11,10 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static br.com.dio.util.BoardTemplate.BOARD_TEMPLATE;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static java.util.stream.Collectors.toMap;
 
 public class Main {
 
@@ -23,7 +26,7 @@ public class Main {
 
     public static void main(String[] args) {
         final var positions = Stream.of(args)
-                .collect(Collectors.toMap(
+                .collect(toMap(
                         k -> k.split(";")[0],
                         v -> v.split(";")[1]
                 ));
@@ -65,8 +68,8 @@ public class Main {
         for (int i = 0; i < BOARD_LIMIT; i++) {
             spaces.add(new ArrayList<>());
             for (int j = 0; j < BOARD_LIMIT; j++) {
-                var positionConfig = positions.get("%s, %s".formatted(i, j));
-                var expected = Integer.parseInt(positionConfig.split(";")[0]);
+                var positionConfig = positions.get("%s,%s".formatted(i, j));
+                var expected = Integer.parseInt(positionConfig.split(",")[0]);
                 var fixed = Boolean.parseBoolean(positionConfig.split(",")[1]);
                 var currentSpace = new Space(expected, fixed);
                 spaces.get(i).add(currentSpace);
@@ -123,15 +126,60 @@ public class Main {
                 args[argPos ++] = " " + ((isNull(col.get(i).getActual())) ? " " : col.get(i).getActual());
             }
         }
+        System.out.println("Seu jogo se encontra da seguinte forma");
+        System.out.printf((BOARD_TEMPLATE) + "%n", args);
     }
 
     private static void showGameStatus() {
+        if (isNull(board)) {
+            System.out.println("O jogo não foi iniciado ainda.");
+            return;
+        }
+
+        System.out.printf("O jogo atualmente se encontra no status %s\n", board.getStatus().getLabel());
+        if (board.hasErrors()) {
+            System.out.println("O jogo contém erros");
+        }
+        else {
+            System.out.println("O jogo não contém erros");
+        }
     }
 
     private static void clearGame() {
+        if (isNull(board)) {
+            System.out.println("O jogo não foi iniciado ainda.");
+            return;
+        }
+
+        System.out.println("Tem certeza que deseja limpar seu jogo e perder todo o seu progresso?");
+        var confirm = scanner.next();
+        while (!confirm.equalsIgnoreCase("sim") && !confirm.equalsIgnoreCase("não")) {
+            System.out.println("Por favor, responda apenas com 'sim' ou 'não'");
+            confirm = scanner.next();
+        }
+
+        if (confirm.equalsIgnoreCase("sim")) {
+            board.reset();
+        }
     }
 
     private static void finishGame() {
+        if (isNull(board)) {
+            System.out.println("O jogo não foi iniciado ainda.");
+            return;
+        }
+
+        if (board.gameIsFinished()) {
+            System.out.println("Parabéns! Você concluiu o jogo");
+            showCurrentGame();
+            board = null;
+        }
+        else if (board.hasErrors()) {
+            System.out.println("Seu jogo contém erros. Corrija-os antes de finalizar o jogo.");
+        }
+        else {
+            System.out.println("Você ainda precisa preencher algum espaço");
+        }
     }
 
     private static int runUntilGetValidNumber(final int min, final int max) {
@@ -143,8 +191,4 @@ public class Main {
 
         return current;
     }
-
-
-    
-    
 }

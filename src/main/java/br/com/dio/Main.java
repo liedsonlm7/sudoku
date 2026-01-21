@@ -111,6 +111,18 @@ public class Main {
     }
 
     private static void showCurrentGame() {
+        if (isNull(board)) {
+            System.out.println("O jogo não foi iniciado ainda.");
+            return;
+        }
+
+        var args = new Object[81];
+        var argPos = 0;
+        for (int i = 0; i < BOARD_LIMIT; i++) {
+            for (var col : board.getSpaces()) {
+                args[argPos ++] = " " + ((isNull(col.get(i).getActual())) ? " " : col.get(i).getActual());
+            }
+        }
     }
 
     private static void showGameStatus() {
